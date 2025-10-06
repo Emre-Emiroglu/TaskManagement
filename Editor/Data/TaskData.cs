@@ -1,7 +1,8 @@
 ﻿using System;
+using TaskManagement.Editor.Enums;
 using UnityEngine;
 
-namespace TaskManagement.Editor
+namespace TaskManagement.Editor.Data
 {
     [CreateAssetMenu(fileName = "TaskData", menuName = "TaskManagement/TaskData", order = 1)]
     public sealed class TaskData : ScriptableObject

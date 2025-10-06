@@ -1,8 +1,6 @@
-﻿using UnityEditor;
-
-namespace TaskManagement.Editor
+﻿namespace TaskManagement.Editor.Window
 {
-    public sealed class TaskManagementEditor : EditorWindow
+    public sealed class TaskManagementEditor : UnityEditor.EditorWindow
     {
         #region Constants
         #endregion

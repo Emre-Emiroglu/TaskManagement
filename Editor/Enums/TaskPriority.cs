@@ -1,4 +1,4 @@
-﻿namespace TaskManagement.Editor
+﻿namespace TaskManagement.Editor.Enums
 {
     public enum TaskPriority
     {
