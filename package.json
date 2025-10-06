@@ -1,0 +1,19 @@
+{
+  "name": "com.emreemiroglu.taskmanagement",
+  "version": "1.0.0",
+  "displayName": "TaskManagement",
+  "description": "TaskManagement is a ScriptableObject-based project and task management tool for the Unity Editor.",
+  "author": {
+    "name": "Emre Emiroglu",
+    "email": "emirogluemre08@gmail.com",
+    "url": "https://github.com/Emre-Emiroglu"
+  },
+  "keywords": [
+    "helpers",
+    "unity"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Emre-Emiroglu/TaskManagement.git"
+  }
+}
