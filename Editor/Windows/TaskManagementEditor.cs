@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using TaskManagement.Editor.Data;
 using TaskManagement.Editor.Enums;
 using TaskManagement.Editor.Utilities;
@@ -42,6 +43,9 @@ namespace TaskManagement.Editor.Windows
         private const string NewTaskTitleEmptyDisplayDialogTitle = "ERROR!";
         private const string NewTaskTitleEmptyDisplayDialogMessage = "Task title cannot be empty.";
         private const string NewTaskTitleEmptyDisplayDialogOk = "Okey";
+        private const string DuplicateTaskDialogTitle = "Duplicate Task";
+        private const string DuplicateTaskDialogMessage = "A task with this title already exists in this project.";
+        private const string DuplicateTaskDialogOk = "OK";
         private const string TaskManagementTasksPath = "/Tasks";
         #endregion
         
@@ -69,7 +73,6 @@ namespace TaskManagement.Editor.Windows
             TaskManagementEditor window = GetWindow<TaskManagementEditor>();
             
             window.titleContent = new GUIContent(TitleContent);
-            
             window.minSize = new Vector2(MinXSize, MinYSize);
             window.maxSize = new Vector2(MaxXSize, MaxYSize);
             
@@ -105,6 +108,7 @@ namespace TaskManagement.Editor.Windows
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 
                 ProjectData project = AssetDatabase.LoadAssetAtPath<ProjectData>(path);
+                
                 if (project != null)
                     _projects.Add(project);
             }
@@ -130,7 +134,6 @@ namespace TaskManagement.Editor.Windows
             string[] names = _projects.ConvertAll(p => p.ProjectName).ToArray();
             
             _selectedProjectIndex = Mathf.Clamp(_selectedProjectIndex, 0, _projects.Count - 1);
-            
             _selectedProjectIndex = EditorGUILayout.Popup(SelectProjectLabel, _selectedProjectIndex, names);
 
             if (GUILayout.Button(CreateNewProjectButtonText, EditorStyles.toolbarButton, GUILayout.Width(128)))
@@ -149,13 +152,12 @@ namespace TaskManagement.Editor.Windows
             if (project.Tasks.Count == 0)
             {
                 EditorGUILayout.HelpBox(NoTasksMessage, MessageType.Info);
-                
                 return;
             }
 
             _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
             
-            foreach (TaskData task in project.Tasks.ToArray())
+            foreach (TaskData task in project.Tasks.ToList())
             {
                 EditorGUILayout.BeginVertical(TasksVerticalStyle);
                 
@@ -181,7 +183,6 @@ namespace TaskManagement.Editor.Windows
                     AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(task));
                     
                     EditorUtility.SetDirty(project);
-                    
                     AssetDatabase.SaveAssets();
                     
                     GUIUtility.ExitGUI();
@@ -189,9 +190,9 @@ namespace TaskManagement.Editor.Windows
                 
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.EndVertical();
-                
                 EditorGUILayout.Space(4);
             }
+
             EditorGUILayout.EndScrollView();
         }
         private void DrawNewTaskSection()
@@ -215,7 +216,6 @@ namespace TaskManagement.Editor.Windows
             {
                 EditorUtility.DisplayDialog(NewTaskTitleEmptyDisplayDialogTitle, NewTaskTitleEmptyDisplayDialogMessage,
                     NewTaskTitleEmptyDisplayDialogOk);
-                
                 return;
             }
 
@@ -223,7 +223,7 @@ namespace TaskManagement.Editor.Windows
             
             CreateNewTask(_taskId, _taskTitle, _taskDescription, _taskStatus, _taskPriority, _taskCategory,
                 _taskAssignee, _taskCreatedDate, _taskDueDate, _taskIsArchived);
-
+            
             ResetTaskFields();
         }
         private void CreateNewProject(string projectName)
@@ -239,7 +239,6 @@ namespace TaskManagement.Editor.Windows
             _selectedProjectIndex = _projects.Count - 1;
             
             EditorUtility.SetDirty(project);
-            
             AssetDatabase.SaveAssets();
         }
         private void CreateNewTask(string id, string taskTitle, string description, TaskStatus status,
@@ -247,9 +246,16 @@ namespace TaskManagement.Editor.Windows
             bool isArchived)
         {
             ProjectData project = _projects[_selectedProjectIndex];
+
+            if (project.Tasks.Exists(t => t.Title == taskTitle))
+            {
+                EditorUtility.DisplayDialog(DuplicateTaskDialogTitle, DuplicateTaskDialogMessage,
+                    DuplicateTaskDialogOk);
+                
+                return;
+            }
             
             string path = $"{TaskManagementProjectsPath}{project.ProjectName}{TaskManagementTasksPath}";
-            
             TaskData task = EditorAssetUtility.CreateOrLoadAsset<TaskData>(path, taskTitle);
             
             task.Id = id;
@@ -259,14 +265,18 @@ namespace TaskManagement.Editor.Windows
             task.Priority = priority;
             task.Category = category;
             task.Assignee = assignee;
+
+            if (string.IsNullOrEmpty(createdDate))
+                createdDate = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+            
             task.CreatedDate = createdDate;
+            
             task.DueDate = dueDate;
             task.IsArchived = isArchived;
             
             project.Tasks.Add(task);
             
             EditorUtility.SetDirty(project);
-            
             AssetDatabase.SaveAssets();
         }
         private void ResetTaskFields()
