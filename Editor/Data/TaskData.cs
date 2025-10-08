@@ -1,5 +1,4 @@
-﻿using System;
-using TaskManagement.Editor.Enums;
+﻿using TaskManagement.Editor.Enums;
 using UnityEngine;
 
 namespace TaskManagement.Editor.Data
@@ -12,8 +11,8 @@ namespace TaskManagement.Editor.Data
         [SerializeField] private string id;
         [SerializeField] private string title;
         [TextArea(2, 16)] [SerializeField] private string description;
-        [SerializeField] private TaskStatus status = TaskStatus.ToDo;
-        [SerializeField] private TaskPriority priority = TaskPriority.Normal;
+        [SerializeField] private TaskStatus status;
+        [SerializeField] private TaskPriority priority;
         [SerializeField] private string category;
         [SerializeField] private string assignee;
         [SerializeField] private string createdDate;
@@ -21,30 +20,57 @@ namespace TaskManagement.Editor.Data
         [SerializeField] private bool isArchived;
         #endregion
         
-        #region Getters
-        public string Id => id;
-        public string Title => title;
-        public string Description => description;
-        public TaskStatus Status => status;
-        public TaskPriority Priority => priority;
-        public string Category => category;
-        public string Assignee => assignee;
-        public string CreatedDate => createdDate;
-        public string DueDate => dueDate;
-        public bool IsArchived => isArchived;
-        #endregion
-        
-        #region Editor Helpers
-#if UNITY_EDITOR
-        private void OnValidate()
+        #region Properities
+        public string Id
         {
-            if (string.IsNullOrEmpty(id))
-                id = Guid.NewGuid().ToString();
-
-            if (string.IsNullOrEmpty(createdDate))
-                createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+            get => id;
+            set => id = value;
         }
-#endif
+        public string Title
+        {
+            get => title;
+            set => title = value;
+        }
+        public string Description
+        {
+            get => description;
+            set => description = value;
+        }
+        public TaskStatus Status
+        {
+            get => status;
+            set => status = value;
+        }
+        public TaskPriority Priority
+        {
+            get => priority;
+            set => priority = value;
+        }
+        public string Category
+        {
+            get => category;
+            set => category = value;
+        }
+        public string Assignee
+        {
+            get => assignee;
+            set => assignee = value;
+        }
+        public string CreatedDate
+        {
+            get => createdDate;
+            set => createdDate = value;
+        }
+        public string DueDate
+        {
+            get => dueDate;
+            set => dueDate = value;
+        }
+        public bool IsArchived
+        {
+            get => isArchived;
+            set => isArchived = value;
+        }
         #endregion
     }
 }
