@@ -48,6 +48,17 @@ namespace TaskManagement.Editor.Windows
         private const string DuplicateTaskDialogOk = "OK";
         private const string TaskManagementTasksPath = "/Tasks";
         #endregion
+
+        #region StaticReadonlyFields
+        private static readonly Color TaskStatusToDoBackgroundColor = Color.yellow;
+        private static readonly Color TaskStatusInProgressBackgroundColor = Color.blue;
+        private static readonly Color TaskStatusDoneBackgroundColor = Color.green;
+        private static readonly Color TaskStatusDefaultBackgroundColor = Color.white;
+        private static readonly Color TaskPriorityLowPriorityColor = Color.darkBlue;
+        private static readonly Color TaskPriorityNormalPriorityColor = Color.darkOrange;
+        private static readonly Color TaskPriorityHighPriorityColor = Color.darkRed;
+        private static readonly Color TaskPriorityDefaultBackgroundColor = Color.gray;
+        #endregion
         
         #region Fields
         private List<ProjectData> _projects = new();
@@ -159,7 +170,17 @@ namespace TaskManagement.Editor.Windows
             
             foreach (TaskData task in project.Tasks.ToList())
             {
+                Color originalColor = GUI.backgroundColor;
+                Color backgroundColor = GetTaskBackgroundColor(task.Status);
+                Color priorityColor = GetPriorityColor(task.Priority);
+        
+                GUI.backgroundColor = backgroundColor;
                 EditorGUILayout.BeginVertical(TasksVerticalStyle);
+                GUI.backgroundColor = originalColor;
+
+                Rect lastRect = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.Height(4));
+                EditorGUI.DrawRect(lastRect, priorityColor);
+                EditorGUILayout.Space(4);
                 
                 EditorGUILayout.LabelField(TaskIdLabel, task.Id);
                 EditorGUILayout.LabelField(TaskTitleLabel, task.Title);
@@ -290,6 +311,26 @@ namespace TaskManagement.Editor.Windows
             _taskCreatedDate = string.Empty;
             _taskDueDate = string.Empty;
             _taskIsArchived = false;
+        }
+        private static Color GetTaskBackgroundColor(TaskStatus status)
+        {
+            return status switch
+            {
+                TaskStatus.ToDo => TaskStatusToDoBackgroundColor,
+                TaskStatus.InProgress => TaskStatusInProgressBackgroundColor,
+                TaskStatus.Done => TaskStatusDoneBackgroundColor,
+                _ => Color.white
+            };
+        }
+        private static Color GetPriorityColor(TaskPriority priority)
+        {
+            return priority switch
+            {
+                TaskPriority.Low => TaskPriorityLowPriorityColor,
+                TaskPriority.Normal => TaskPriorityNormalPriorityColor,
+                TaskPriority.High => TaskPriorityHighPriorityColor,
+                _ => TaskPriorityDefaultBackgroundColor
+            };
         }
         #endregion
     }

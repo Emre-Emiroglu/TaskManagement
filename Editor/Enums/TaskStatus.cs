@@ -4,7 +4,6 @@
     {
         ToDo,
         InProgress,
-        Done,
-        Blocked
+        Done
     }
 }
