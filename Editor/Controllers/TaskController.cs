@@ -66,14 +66,17 @@ namespace TaskManagement.Editor.Controllers
         #endregion
         
         #region StaticReadonlyFields
-        private static readonly Color TaskStatusToDoBackgroundColor = Color.yellow;
-        private static readonly Color TaskStatusInProgressBackgroundColor = Color.blue;
-        private static readonly Color TaskStatusDoneBackgroundColor = Color.green;
-        private static readonly Color TaskStatusDefaultBackgroundColor = Color.white;
-        private static readonly Color TaskPriorityLowPriorityColor = Color.darkBlue;
-        private static readonly Color TaskPriorityNormalPriorityColor = Color.darkOrange;
-        private static readonly Color TaskPriorityHighPriorityColor = Color.darkRed;
-        private static readonly Color TaskPriorityDefaultBackgroundColor = Color.gray;
+        private static readonly Color TaskStatusToDoBackgroundColor = new(0.8f, 0.7f, 0.2f, 0.2f);
+        private static readonly Color TaskStatusInProgressBackgroundColor = new(0.2f, 0.5f, 0.8f, 0.2f);
+        private static readonly Color TaskStatusDoneBackgroundColor = new(0.2f, 0.8f, 0.3f, 0.2f);
+        private static readonly Color TaskStatusDefaultBackgroundColor = new(0.3f, 0.3f, 0.3f, 0.2f);
+        private static readonly Color TaskPriorityLowPriorityColor = new(0.3f, 0.6f, 0.9f, 0.7f);
+        private static readonly Color TaskPriorityNormalPriorityColor = new(0.9f, 0.6f, 0.2f, 0.7f);
+        private static readonly Color TaskPriorityHighPriorityColor = new(0.9f, 0.3f, 0.3f, 0.7f);
+        private static readonly Color TaskPriorityDefaultBackgroundColor = new(0.5f, 0.5f, 0.5f, 0.7f);
+        private static readonly Color EditButtonColor = new(0.3f, 0.6f, 0.9f, 1f);
+        private static readonly Color DeleteButtonColor = new(0.9f, 0.3f, 0.3f, 1f);
+        private static readonly Color AddButtonColor = new(0.3f, 0.8f, 0.3f, 1f);
         #endregion
         
         #region Fields
@@ -107,13 +110,15 @@ namespace TaskManagement.Editor.Controllers
         public void DrawSortToolbar()
         {
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-    
+
             EditorGUILayout.LabelField($"{SortIcon}{SortByLabel}", GUILayout.Width(80));
 
             _currentSortOption = (SortOption)EditorGUILayout.EnumPopup(_currentSortOption, GUILayout.Width(128));
 
+            GUILayout.FlexibleSpace();
+
             if (GUILayout.Button(_sortAscending ? UpArrowIcon : DownArrowIcon, EditorStyles.toolbarButton,
-                    GUILayout.Width(24)))
+                    GUILayout.Width(32)))
                 _sortAscending = !_sortAscending;
 
             EditorGUILayout.EndHorizontal();
@@ -128,9 +133,10 @@ namespace TaskManagement.Editor.Controllers
             if (project.Tasks.Count == 0)
             {
                 EditorGUILayout.HelpBox($"{NoTasksIcon} {NoTasksMessage}", MessageType.Info);
-                
                 return;
             }
+
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             
             List<TaskData> sortedTasks = project.Tasks.ToList();
 
@@ -152,7 +158,7 @@ namespace TaskManagement.Editor.Controllers
             };
 
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
-            
+
             foreach (TaskData task in sortedTasks)
             {
                 string currentRemaining = CalculateRemainingTime(task.DueDate);
@@ -162,23 +168,18 @@ namespace TaskManagement.Editor.Controllers
                     task.RemainingTime = currentRemaining;
                     EditorUtility.SetDirty(task);
                 }
-                
+
                 Color originalColor = GUI.backgroundColor;
                 Color backgroundColor = GetTaskBackgroundColor(task.Status);
                 Color priorityColor = GetPriorityColor(task.Priority);
         
                 GUI.backgroundColor = backgroundColor;
-                
                 EditorGUILayout.BeginVertical(TasksVerticalStyle);
-                
                 GUI.backgroundColor = originalColor;
 
                 Rect lastRect = GUILayoutUtility.GetRect(GUIContent.none, GUIStyle.none, GUILayout.Height(4));
-                
                 EditorGUI.DrawRect(lastRect, priorityColor);
                 
-                EditorGUILayout.Space(4);
-
                 EditorGUILayout.LabelField($"{IdIcon} {TaskIdLabel}", task.Id);
                 EditorGUILayout.LabelField($"{TaskIcon} {TaskTitleLabel}", task.Title);
                 EditorGUILayout.LabelField($"{DescriptionIcon} {TaskDescriptionLabel}", task.Description);
@@ -192,6 +193,7 @@ namespace TaskManagement.Editor.Controllers
 
                 EditorGUILayout.BeginHorizontal();
                 
+                GUI.backgroundColor = EditButtonColor;
                 if (GUILayout.Button($"{EditIcon}{TaskEditButtonText}", GUILayout.Width(96)))
                 {
                     Selection.activeObject = task;
@@ -206,26 +208,23 @@ namespace TaskManagement.Editor.Controllers
                     _editDueDate = task.DueDate;
                 }
 
+                GUI.backgroundColor = DeleteButtonColor;
                 if (GUILayout.Button($"{DeleteIcon}{TaskDeleteButtonText}", GUILayout.Width(96)))
                 {
                     project.Tasks.Remove(task);
-                    
                     AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(task));
-                    
                     EditorUtility.SetDirty(project);
-                    
                     AssetDatabase.SaveAssets();
-                    
                     GUIUtility.ExitGUI();
                 }
-                
+
+                GUI.backgroundColor = originalColor;
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.EndVertical();
-                
-                EditorGUILayout.Space(4);
             }
 
             EditorGUILayout.EndScrollView();
+            EditorGUILayout.EndVertical();
         }
         private static int ParseRemainingDays(string remaining)
         {
@@ -287,6 +286,8 @@ namespace TaskManagement.Editor.Controllers
         }
         public void DrawNewTaskSection(ProjectController projectController)
         {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
             EditorGUILayout.LabelField($"{AddIcon}{NewTaskLabel}", EditorStyles.boldLabel);
 
             _taskTitle = EditorGUILayout.TextField($"{TaskIcon} {TaskTitleLabel}", _taskTitle);
@@ -298,17 +299,12 @@ namespace TaskManagement.Editor.Controllers
             _taskAssignee = EditorGUILayout.TextField($"{UserIcon} {TaskAssigneeLabel}", _taskAssignee);
             
             EditorGUILayout.BeginHorizontal();
-            
             EditorGUILayout.LabelField($"{CalendarIcon} {TaskCreatedDateLabel}", GUILayout.Width(128));
-            
             _taskCreatedDate = DateTime.Now.ToString(TaskCreatedDateFormat);
-            
             EditorGUILayout.LabelField(_taskCreatedDate);
-            
             EditorGUILayout.EndHorizontal();
                 
             EditorGUILayout.BeginHorizontal();
-            
             _taskDueDate = EditorGUILayout.TextField($"{CalendarIcon} {TaskDueDateLabel}", _taskDueDate);
             
             if (GUILayout.Button(TaskDueDateTodayButtonText, GUILayout.Width(64)))
@@ -317,35 +313,34 @@ namespace TaskManagement.Editor.Controllers
                 _taskDueDate = AdjustDate(_taskDueDate, 1);
             if (GUILayout.Button(TaskDueDateRemoveOneDayButtonText, GUILayout.Width(32)))
                 _taskDueDate = AdjustDate(_taskDueDate, -1);
-            
             EditorGUILayout.EndHorizontal();
             
             string remaining = CalculateRemainingTime(_taskDueDate);
-            
             if (!string.IsNullOrEmpty(remaining))
             {
                 _taskRemainingTime = $"{TimeIcon} {TaskRemainingTimeLabel} {remaining}";
-                
                 EditorGUILayout.HelpBox(_taskRemainingTime, MessageType.None);
             }
 
-            if (!GUILayout.Button($"{AddIcon}{CreateNewTaskButtonText}", GUILayout.Width(128)))
-                return;
-    
-            if (string.IsNullOrWhiteSpace(_taskTitle))
+            Color originalColor = GUI.backgroundColor;
+            GUI.backgroundColor = AddButtonColor;
+            if (GUILayout.Button($"{AddIcon}{CreateNewTaskButtonText}", GUILayout.Width(128)))
             {
-                EditorUtility.DisplayDialog($"{ErrorIcon}{NewTaskTitleEmptyDisplayDialogTitle}",
-                    NewTaskTitleEmptyDisplayDialogMessage, NewTaskTitleEmptyDisplayDialogOk);
-                
-                return;
-            }
+                if (string.IsNullOrWhiteSpace(_taskTitle))
+                {
+                    EditorUtility.DisplayDialog($"{ErrorIcon}{NewTaskTitleEmptyDisplayDialogTitle}",
+                        NewTaskTitleEmptyDisplayDialogMessage, NewTaskTitleEmptyDisplayDialogOk);
+                    return;
+                }
             
-            _taskId = GUID.Generate().ToString();
+                _taskId = GUID.Generate().ToString();
+                CreateNewTask(projectController, _taskId, _taskTitle, _taskDescription, _taskStatus, _taskPriority,
+                    _taskCategory, _taskAssignee, _taskCreatedDate, _taskDueDate, _taskRemainingTime);
+                ResetTaskFields();
+            }
+            GUI.backgroundColor = originalColor;
 
-            CreateNewTask(projectController, _taskId, _taskTitle, _taskDescription, _taskStatus, _taskPriority,
-                _taskCategory, _taskAssignee, _taskCreatedDate, _taskDueDate, _taskRemainingTime);
-    
-            ResetTaskFields();
+            EditorGUILayout.EndVertical();
         }
         private static string AdjustDate(string date, int days)
         {
@@ -415,19 +410,19 @@ namespace TaskManagement.Editor.Controllers
         }
         public void DrawTaskEditSection()
         {
-            EditorGUILayout.Space(8);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             
             EditorGUILayout.LabelField($"{EditIcon}{EditTaskLabel}", EditorStyles.boldLabel);
 
             _editTitle = EditorGUILayout.TextField($"{TaskIcon} {TaskTitleLabel}", _editTitle);
             _editDescription = EditorGUILayout.TextField($"{DescriptionIcon} {TaskDescriptionLabel}", _editDescription);
             _editStatus = (TaskStatus)EditorGUILayout.EnumPopup($"{StatusIcon} {TaskStatusLabel}", _editStatus);
-            _editPriority = (TaskPriority)EditorGUILayout.EnumPopup($"{PriorityIcon} {TaskPriorityLabel}", _editPriority);
+            _editPriority =
+                (TaskPriority)EditorGUILayout.EnumPopup($"{PriorityIcon} {TaskPriorityLabel}", _editPriority);
             _editCategory = EditorGUILayout.TextField($"{CategoryIcon} {TaskCategoryLabel}", _editCategory);
             _editAssignee = EditorGUILayout.TextField($"{UserIcon} {TaskAssigneeLabel}", _editAssignee);
             
             EditorGUILayout.BeginHorizontal();
-            
             _editDueDate = EditorGUILayout.TextField($"{CalendarIcon} {TaskDueDateLabel}", _editDueDate);
             
             if (GUILayout.Button(TaskDueDateTodayButtonText, GUILayout.Width(64)))
@@ -436,24 +431,30 @@ namespace TaskManagement.Editor.Controllers
                 _editDueDate = AdjustDate(_editDueDate, 1);
             if (GUILayout.Button(TaskDueDateRemoveOneDayButtonText, GUILayout.Width(32)))
                 _editDueDate = AdjustDate(_editDueDate, -1);
-            
             EditorGUILayout.EndHorizontal();
 
             string remaining = CalculateRemainingTime(_editDueDate);
-            
             EditorGUILayout.HelpBox($"{TimeIcon} {TaskRemainingTimeLabel} {remaining}", MessageType.None);
 
             EditorGUILayout.BeginHorizontal();
             
+            Color originalColor = GUI.backgroundColor;
+            
+            GUI.backgroundColor = AddButtonColor;
             if (GUILayout.Button($"{SaveIcon}{EditTaskSaveChangesButtonText}", GUILayout.Width(128)))
                 ApplyTaskEdits();
+        
+            GUI.backgroundColor = DeleteButtonColor;
             if (GUILayout.Button($"{CancelIcon}{EditTaskCancelEditButtonText}", GUILayout.Width(96)))
             {
                 IsEditingTask = false;
                 _selectedTaskForEdit = null;
             }
             
+            GUI.backgroundColor = originalColor;
             EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.EndVertical();
         }
         private void ApplyTaskEdits()
         {

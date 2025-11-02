@@ -9,10 +9,10 @@ namespace TaskManagement.Editor.Window
         #region Constants
         private const string MenuItemName = "Tools/Task Management Editor";
         private const string TitleContent = "Task Management Editor";
-        private const int MinXSize = 512;
-        private const int MinYSize = 256;
-        private const int MaxXSize = 1024;
-        private const int MaxYSize = 512;
+        private const int MinXSize = 1920;
+        private const int MinYSize = 1080;
+        private const int MaxXSize = 1920;
+        private const int MaxYSize = 1080;
         #endregion
         
         #region ReadonlyFields
@@ -49,13 +49,9 @@ namespace TaskManagement.Editor.Window
             
             _projectController.DrawProjectEditor();
             
-            EditorGUILayout.Space(8);
-
             _taskController.DrawSortToolbar();
             
             _taskController.DrawTaskList(_projectController, ref _scrollPos);
-            
-            EditorGUILayout.Space(16);
             
             if (!_taskController.IsEditingTask)
                 _taskController.DrawNewTaskSection(_projectController);

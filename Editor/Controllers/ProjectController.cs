@@ -31,10 +31,9 @@ namespace TaskManagement.Editor.Controllers
         #endregion
         
         #region StaticReadonlyFields
-        private static readonly Color DeleteProjectColor = new(0.75f, 0.25f, 0.25f, 0.75f);
-        private static readonly Color DefaultEditProjectColor = new(0.125f, 0.125f, 0.125f, 0.75f);
-        private static readonly Color ProjectNameBackgroundColor = new(0.25f, 0.25f, 0.25f, 0.75f);
-        private static readonly Color ProjectSectionBackgroundColor = new(0.175f, 0.175f, 0.175f, 0.75f);
+        private static readonly Color DeleteProjectColor = new(0.9f, 0.3f, 0.3f, 0.8f);
+        private static readonly Color DefaultEditProjectColor = new(0.2f, 0.2f, 0.2f, 0.6f);
+        private static readonly Color ProjectNameBackgroundColor = new(0.25f, 0.25f, 0.25f, 0.6f);
         #endregion
 
         #region Fields
@@ -71,15 +70,7 @@ namespace TaskManagement.Editor.Controllers
             if (_projects.Count > 0)
                 return false;
             
-            Rect bgRect = EditorGUILayout.BeginVertical();
-            
-            EditorGUI.DrawRect(bgRect, ProjectSectionBackgroundColor);
-
-            EditorGUILayout.Space(8);
-            
             EditorGUILayout.HelpBox($"{NoProjectFoundIcon} {NoProjectFoundMessage}", MessageType.Info);
-            
-            EditorGUILayout.Space(4);
             
             EditorGUILayout.BeginHorizontal();
             
@@ -89,23 +80,13 @@ namespace TaskManagement.Editor.Controllers
             
             EditorGUILayout.EndHorizontal();
 
-            EditorGUILayout.Space(8);
-
             if (GUILayout.Button($"{CreateProjectIcon}{CreateNewProjectButtonText}", GUILayout.Width(128)))
                 CreateNewProject(_projectName);
             
-            EditorGUILayout.EndVertical();
-
             return true;
         }
         public void DrawProjectSelector()
         {
-            Rect bgRect = EditorGUILayout.BeginVertical();
-            
-            EditorGUI.DrawRect(bgRect, ProjectSectionBackgroundColor);
-            
-            EditorGUILayout.Space(4);
-            
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
     
             GUILayout.Label($"{ProjectIcon}", GUILayout.Width(32));
@@ -136,10 +117,6 @@ namespace TaskManagement.Editor.Controllers
             }
     
             EditorGUILayout.EndHorizontal();
-            
-            EditorGUILayout.Space(4);
-    
-            EditorGUILayout.EndVertical();
         }
         public void DrawProjectEditor()
         {
@@ -151,14 +128,6 @@ namespace TaskManagement.Editor.Controllers
             if (!project)
                 return;
     
-            EditorGUILayout.Space(8);
-            
-            Rect bgRect = EditorGUILayout.BeginVertical();
-            
-            EditorGUI.DrawRect(bgRect, ProjectSectionBackgroundColor);
-            
-            EditorGUILayout.Space(4);
-    
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
     
             EditorGUILayout.BeginHorizontal();
@@ -169,8 +138,6 @@ namespace TaskManagement.Editor.Controllers
             
             EditorGUILayout.EndHorizontal();
     
-            EditorGUILayout.Space(4);
-
             EditorGUILayout.BeginHorizontal();
             
             EditorGUILayout.LabelField(EditProjectNameLabel, GUILayout.Width(96));
@@ -187,8 +154,6 @@ namespace TaskManagement.Editor.Controllers
                 
                 AssetDatabase.SaveAssets();
             }
-    
-            EditorGUILayout.Space(8);
     
             EditorGUILayout.BeginHorizontal();
             
@@ -210,12 +175,6 @@ namespace TaskManagement.Editor.Controllers
     
             EditorGUILayout.EndHorizontal();
             
-            EditorGUILayout.Space(4);
-            
-            EditorGUILayout.EndVertical();
-            
-            EditorGUILayout.Space(4);
-    
             EditorGUILayout.EndVertical();
         }
         private void DeleteProject(ProjectData project)
