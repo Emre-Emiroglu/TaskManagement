@@ -10,9 +10,9 @@ namespace TaskManagement.Editor.Window
         private const string MenuItemName = "Tools/Task Management Editor";
         private const string TitleContent = "Task Management Editor";
         private const int MinXSize = 512;
-        private const int MinYSize = 512;
+        private const int MinYSize = 256;
         private const int MaxXSize = 1024;
-        private const int MaxYSize = 1024;
+        private const int MaxYSize = 512;
         #endregion
         
         #region ReadonlyFields

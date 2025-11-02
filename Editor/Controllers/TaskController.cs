@@ -106,6 +106,9 @@ namespace TaskManagement.Editor.Controllers
         {
             ProjectData project = projectController.ProjectData;
             
+            if (!project)
+                return;
+            
             if (project.Tasks.Count == 0)
             {
                 EditorGUILayout.HelpBox(NoTasksMessage, MessageType.Info);
@@ -343,6 +346,9 @@ namespace TaskManagement.Editor.Controllers
             string createdDate, string dueDate, string remainingTime)
         {
             ProjectData project = projectController.ProjectData;
+            
+            if (!project)
+                return;
 
             if (project.Tasks.Exists(t => t.Title == taskTitle))
             {
