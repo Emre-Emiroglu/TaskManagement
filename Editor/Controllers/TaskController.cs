@@ -28,14 +28,14 @@ namespace TaskManagement.Editor.Controllers
         private const string TaskCreatedDateLabel = "Created Date:";
         private const string TaskDueDateLabel = "Due Date:";
         private const string TaskRemainingTimeLabel = "Remaining Time:";
-        private const string TaskEditButtonText = "Edit";
-        private const string TaskDeleteButtonText = "Delete";
+        private const string TaskEditButtonText = "✎ Edit";
+        private const string TaskDeleteButtonText = "✖ Delete";
         private const string NewTaskLabel = "Add new task.";
         private const string TaskCreatedDateFormat = "yyyy-MM-dd";
         private const string TaskDueDateTodayButtonText = "Today";
         private const string TaskDueDateAddOneDayButtonText = "+1";
         private const string TaskDueDateRemoveOneDayButtonText = "-1";
-        private const string CreateNewTaskButtonText = "Create new task.";
+        private const string CreateNewTaskButtonText = "✚ Add";
         private const string NewTaskTitleEmptyDisplayDialogTitle = "ERROR!";
         private const string NewTaskTitleEmptyDisplayDialogMessage = "Task title cannot be empty.";
         private const string NewTaskTitleEmptyDisplayDialogOk = "Okey";
@@ -44,7 +44,7 @@ namespace TaskManagement.Editor.Controllers
         private const string DuplicateTaskDialogOk = "OK";
         private const string TaskManagementTasksPath = "/Tasks";
         private const string EditTaskLabel = "Edit Task";
-        private const string EditTaskSaveChangesButtonText = "SaveChanges";
+        private const string EditTaskSaveChangesButtonText = "Save Changes";
         private const string EditTaskCancelEditButtonText = "Cancel Edit";
         #endregion
         
