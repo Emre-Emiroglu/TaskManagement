@@ -11,7 +11,7 @@ namespace TaskManagement.Editor.Windows
     public sealed class TaskManagementEditor : EditorWindow
     {
         #region Constants
-        private const string MenuItemName = "Tools/Open Task Management Editor";
+        private const string MenuItemName = "Tools/Task Management Editor";
         private const string TitleContent = "Task Management Editor";
         private const int MinXSize = 512;
         private const int MinYSize = 512;
@@ -319,7 +319,7 @@ namespace TaskManagement.Editor.Windows
                 TaskStatus.ToDo => TaskStatusToDoBackgroundColor,
                 TaskStatus.InProgress => TaskStatusInProgressBackgroundColor,
                 TaskStatus.Done => TaskStatusDoneBackgroundColor,
-                _ => Color.white
+                _ => TaskStatusDefaultBackgroundColor
             };
         }
         private static Color GetPriorityColor(TaskPriority priority)

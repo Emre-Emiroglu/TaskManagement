@@ -12,7 +12,7 @@ namespace TaskManagement.Editor.Data
         [SerializeField] private List<TaskData> tasks;
         #endregion
 
-        #region Getters
+        #region Properities
         public string ProjectName
         {
             get => projectName;

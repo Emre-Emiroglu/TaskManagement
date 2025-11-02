@@ -13,7 +13,7 @@ namespace TaskManagement.Editor.Utilities
             
             T asset = AssetDatabase.LoadAssetAtPath<T>(fullPath);
             
-            if (asset != null)
+            if (asset)
                 return asset;
             
             if (!Directory.Exists(path))
