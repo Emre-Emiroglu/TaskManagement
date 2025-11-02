@@ -36,12 +36,11 @@ namespace TaskManagement.Editor.Windows
         private const string TaskAssigneeLabel = "Assignee:";
         private const string TaskCreatedDateLabel = "Created Date:";
         private const string TaskDueDateLabel = "Due Date:";
+        private const string TaskRemainingTimeLabel = "Remaining Time:";
         private const string TaskCreatedDateFormat = "yyyy-MM-dd";
         private const string TaskDueDateTodayButtonText = "Today";
         private const string TaskDueDateAddOneDayButtonText = "+1";
         private const string TaskDueDateRemoveOneDayButtonText = "-1";
-        private const string TaskRemainingTime = "-1";
-        private const string TaskRemainingTimePrefix = "Remaining Time:";
         private const string InvalidDateFormatInfoMessage = "Invalid date format";
         private const string TaskEditButtonText = "Edit";
         private const string TaskDeleteButtonText = "Delete";
@@ -82,6 +81,17 @@ namespace TaskManagement.Editor.Windows
         private string _taskCreatedDate = string.Empty;
         private string _taskDueDate = string.Empty;
         private string _taskRemainingTime = string.Empty;
+        private TaskData _selectedTaskForEdit;
+        private bool _isEditingTask;
+        private string _editTitle;
+        private string _editDescription;
+        private TaskStatus _editStatus;
+        private TaskPriority _editPriority;
+        private string _editCategory;
+        private string _editAssignee;
+        private string _editDueDate;
+        private SortOption _currentSortOption = SortOption.None;
+        private bool _sortAscending = true;
         #endregion
         
         #region Core
@@ -107,13 +117,22 @@ namespace TaskManagement.Editor.Windows
 
             DrawProjectSelector();
             
+            EditorGUILayout.Space(4);
+            
+            DrawProjectEditor();
+            
             EditorGUILayout.Space(8);
+            
+            DrawSortToolbar();
             
             DrawTaskList();
             
             EditorGUILayout.Space(16);
             
-            DrawNewTaskSection();
+            if (!_isEditingTask)
+                DrawNewTaskSection();
+            else
+                DrawTaskEditSection();
         }
         private void LoadProjects()
         {
@@ -163,8 +182,29 @@ namespace TaskManagement.Editor.Windows
             
             EditorGUILayout.EndHorizontal();
         }
+        private void DrawProjectEditor()
+        {
+            if (_selectedProjectIndex < 0 || _selectedProjectIndex >= _projects.Count)
+                return;
+
+            ProjectData project = _projects[_selectedProjectIndex];
+            EditorGUILayout.Space(4);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("Project Settings", EditorStyles.boldLabel);
+
+            string newName = EditorGUILayout.TextField("Project Name", project.ProjectName);
+            if (newName != project.ProjectName)
+            {
+                project.ProjectName = newName;
+                EditorUtility.SetDirty(project);
+                AssetDatabase.SaveAssets();
+            }
+
+            EditorGUILayout.EndVertical();
+        }
         private void DrawTaskList()
         {
+            
             ProjectData project = _projects[_selectedProjectIndex];
             
             if (project.Tasks.Count == 0)
@@ -172,10 +212,39 @@ namespace TaskManagement.Editor.Windows
                 EditorGUILayout.HelpBox(NoTasksMessage, MessageType.Info);
                 return;
             }
+            
+            List<TaskData> sortedTasks = project.Tasks.ToList();
+
+            switch (_currentSortOption)
+            {
+                case SortOption.Assignee:
+                    sortedTasks = _sortAscending
+                        ? sortedTasks.OrderBy(t => t.Assignee).ToList()
+                        : sortedTasks.OrderByDescending(t => t.Assignee).ToList();
+                    break;
+
+                case SortOption.Priority:
+                    sortedTasks = _sortAscending
+                        ? sortedTasks.OrderBy(t => t.Priority).ToList()
+                        : sortedTasks.OrderByDescending(t => t.Priority).ToList();
+                    break;
+
+                case SortOption.Status:
+                    sortedTasks = _sortAscending
+                        ? sortedTasks.OrderBy(t => t.Status).ToList()
+                        : sortedTasks.OrderByDescending(t => t.Status).ToList();
+                    break;
+
+                case SortOption.RemainingTime:
+                    sortedTasks = _sortAscending
+                        ? sortedTasks.OrderBy(t => ParseRemainingDays(t.RemainingTime)).ToList()
+                        : sortedTasks.OrderByDescending(t => ParseRemainingDays(t.RemainingTime)).ToList();
+                    break;
+            }
 
             _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
             
-            foreach (TaskData task in project.Tasks.ToList())
+            foreach (TaskData task in sortedTasks)
             {
                 string currentRemaining = CalculateRemainingTime(task.DueDate);
                 
@@ -207,11 +276,24 @@ namespace TaskManagement.Editor.Windows
                 EditorGUILayout.LabelField(TaskAssigneeLabel, task.Assignee);
                 EditorGUILayout.LabelField(TaskCreatedDateLabel, task.CreatedDate);
                 EditorGUILayout.LabelField(TaskDueDateLabel, task.DueDate);
-                EditorGUILayout.LabelField(TaskRemainingTime, task.RemainingTime);
+                EditorGUILayout.LabelField(TaskRemainingTimeLabel, task.RemainingTime);
 
                 EditorGUILayout.BeginHorizontal();
                 if (GUILayout.Button(TaskEditButtonText, GUILayout.Width(96)))
+                {
                     Selection.activeObject = task;
+                    
+                    _selectedTaskForEdit = task;
+                    _isEditingTask = true;
+
+                    _editTitle = task.Title;
+                    _editDescription = task.Description;
+                    _editStatus = task.Status;
+                    _editPriority = task.Priority;
+                    _editCategory = task.Category;
+                    _editAssignee = task.Assignee;
+                    _editDueDate = task.DueDate;
+                }
 
                 if (GUILayout.Button(TaskDeleteButtonText, GUILayout.Width(64)))
                 {
@@ -262,7 +344,7 @@ namespace TaskManagement.Editor.Windows
             string remaining = CalculateRemainingTime(_taskDueDate);
             if (!string.IsNullOrEmpty(remaining))
             {
-                _taskRemainingTime = $"{TaskRemainingTimePrefix} {remaining}";
+                _taskRemainingTime = $"{TaskRemainingTimeLabel} {remaining}";
                 
                 EditorGUILayout.HelpBox(_taskRemainingTime, MessageType.None);
             }
@@ -283,6 +365,57 @@ namespace TaskManagement.Editor.Windows
                 _taskAssignee, _taskCreatedDate, _taskDueDate, _taskRemainingTime);
     
             ResetTaskFields();
+        }
+        private void DrawTaskEditSection()
+        {
+            EditorGUILayout.Space(8);
+            EditorGUILayout.LabelField("Edit Task", EditorStyles.boldLabel);
+
+            _editTitle = EditorGUILayout.TextField(TaskTitleLabel, _editTitle);
+            _editDescription = EditorGUILayout.TextField(TaskDescriptionLabel, _editDescription);
+            _editStatus = (TaskStatus)EditorGUILayout.EnumPopup(TaskStatusLabel, _editStatus);
+            _editPriority = (TaskPriority)EditorGUILayout.EnumPopup(TaskPriorityLabel, _editPriority);
+            _editCategory = EditorGUILayout.TextField(TaskCategoryLabel, _editCategory);
+            _editAssignee = EditorGUILayout.TextField(TaskAssigneeLabel, _editAssignee);
+            EditorGUILayout.BeginHorizontal();
+            _editDueDate = EditorGUILayout.TextField(TaskDueDateLabel, _editDueDate);
+            if (GUILayout.Button(TaskDueDateTodayButtonText, GUILayout.Width(64)))
+                _editDueDate = DateTime.Now.ToString(TaskCreatedDateFormat);
+            if (GUILayout.Button(TaskDueDateAddOneDayButtonText, GUILayout.Width(32)))
+                _editDueDate = AdjustDate(_editDueDate, 1);
+            if (GUILayout.Button(TaskDueDateRemoveOneDayButtonText, GUILayout.Width(32)))
+                _editDueDate = AdjustDate(_editDueDate, -1);
+            EditorGUILayout.EndHorizontal();
+
+            string remaining = CalculateRemainingTime(_editDueDate);
+            EditorGUILayout.HelpBox($"{TaskRemainingTimeLabel} {remaining}", MessageType.None);
+
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Save Changes", GUILayout.Width(128)))
+            {
+                ApplyTaskEdits();
+            }
+            if (GUILayout.Button("Cancel Edit", GUILayout.Width(96)))
+            {
+                _isEditingTask = false;
+                _selectedTaskForEdit = null;
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+        private void DrawSortToolbar()
+        {
+            EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
+            EditorGUILayout.LabelField("Sort by:", GUILayout.Width(64));
+
+            _currentSortOption = (SortOption)EditorGUILayout.EnumPopup(_currentSortOption, GUILayout.Width(128));
+
+            string sortOrderLabel = _sortAscending ? "↑ Ascending" : "↓ Descending";
+            if (GUILayout.Button(sortOrderLabel, EditorStyles.toolbarButton, GUILayout.Width(96)))
+            {
+                _sortAscending = !_sortAscending;
+            }
+
+            EditorGUILayout.EndHorizontal();
         }
         private void CreateNewProject(string projectName)
         {
@@ -396,6 +529,45 @@ namespace TaskManagement.Editor.Windows
                 0 => "Due today",
                 _ => $"{Mathf.Abs(remaining)} day{(Mathf.Abs(remaining) > 1 ? "s" : "")} overdue"
             };
+        }
+        private void ApplyTaskEdits()
+        {
+            if (!_selectedTaskForEdit)
+                return;
+
+            _selectedTaskForEdit.Title = _editTitle;
+            _selectedTaskForEdit.Description = _editDescription;
+            _selectedTaskForEdit.Status = _editStatus;
+            _selectedTaskForEdit.Priority = _editPriority;
+            _selectedTaskForEdit.Category = _editCategory;
+            _selectedTaskForEdit.Assignee = _editAssignee;
+            _selectedTaskForEdit.DueDate = _editDueDate;
+            _selectedTaskForEdit.RemainingTime = CalculateRemainingTime(_editDueDate);
+
+            EditorUtility.SetDirty(_selectedTaskForEdit);
+            AssetDatabase.SaveAssets();
+
+            _isEditingTask = false;
+            _selectedTaskForEdit = null;
+        }
+        private static int ParseRemainingDays(string remaining)
+        {
+            if (string.IsNullOrEmpty(remaining))
+                return int.MaxValue;
+
+            if (remaining.Contains("overdue"))
+            {
+                string number = new string(remaining.Where(char.IsDigit).ToArray());
+                return -int.Parse(number);
+            }
+
+            if (remaining.Contains("day"))
+            {
+                string number = new string(remaining.Where(char.IsDigit).ToArray());
+                return int.TryParse(number, out int value) ? value : 0;
+            }
+
+            return 0;
         }
         #endregion
     }
