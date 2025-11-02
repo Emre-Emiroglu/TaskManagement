@@ -13,8 +13,6 @@ namespace TaskManagement.Editor.Controllers
     {
         #region Constants
         private const string SortByLabel = "Sort by:";
-        private const string SortAscendingLabel = "↑ Ascending";
-        private const string SortDescendingLabel = "↓ Descending";
         private const string NoTasksMessage = "No tasks in this project yet.";
         private const string InvalidDateFormatInfoMessage = "Invalid date format";
         private const string TasksVerticalStyle = "box";
@@ -28,14 +26,14 @@ namespace TaskManagement.Editor.Controllers
         private const string TaskCreatedDateLabel = "Created Date:";
         private const string TaskDueDateLabel = "Due Date:";
         private const string TaskRemainingTimeLabel = "Remaining Time:";
-        private const string TaskEditButtonText = "✎ Edit";
-        private const string TaskDeleteButtonText = "✖ Delete";
-        private const string NewTaskLabel = "Add new task.";
+        private const string TaskEditButtonText = "Edit";
+        private const string TaskDeleteButtonText = "Delete";
+        private const string NewTaskLabel = "Add new task";
         private const string TaskCreatedDateFormat = "yyyy-MM-dd";
         private const string TaskDueDateTodayButtonText = "Today";
         private const string TaskDueDateAddOneDayButtonText = "+1";
         private const string TaskDueDateRemoveOneDayButtonText = "-1";
-        private const string CreateNewTaskButtonText = "✚ Add";
+        private const string CreateNewTaskButtonText = "Add";
         private const string NewTaskTitleEmptyDisplayDialogTitle = "ERROR!";
         private const string NewTaskTitleEmptyDisplayDialogMessage = "Task title cannot be empty.";
         private const string NewTaskTitleEmptyDisplayDialogOk = "Okey";
@@ -43,9 +41,28 @@ namespace TaskManagement.Editor.Controllers
         private const string DuplicateTaskDialogMessage = "A task with this title already exists in this project.";
         private const string DuplicateTaskDialogOk = "OK";
         private const string TaskManagementTasksPath = "/Tasks";
-        private const string EditTaskLabel = "Edit Task";
+        private const string EditTaskLabel = "Edit";
         private const string EditTaskSaveChangesButtonText = "Save Changes";
-        private const string EditTaskCancelEditButtonText = "Cancel Edit";
+        private const string EditTaskCancelEditButtonText = "Cancel";
+        private const string UpArrowIcon = "↑ ";
+        private const string DownArrowIcon = "↓ ";
+        private const string TaskIcon = "📝 ";
+        private const string EditIcon = "✎ ";
+        private const string DeleteIcon = "✖ ";
+        private const string AddIcon = "✚ ";
+        private const string SaveIcon = "💾 ";
+        private const string CancelIcon = "↩ ";
+        private const string CalendarIcon = "📅 ";
+        private const string UserIcon = "👤 ";
+        private const string CategoryIcon = "🏷️ ";
+        private const string PriorityIcon = "⚡ ";
+        private const string StatusIcon = "⭐ ";
+        private const string DescriptionIcon = "📄 ";
+        private const string SortIcon = "🔄 ";
+        private const string NoTasksIcon = "📭 ";
+        private const string ErrorIcon = "⚠️ ";
+        private const string IdIcon = "🔑 ";
+        private const string TimeIcon = "⏱️ ";
         #endregion
         
         #region StaticReadonlyFields
@@ -90,14 +107,13 @@ namespace TaskManagement.Editor.Controllers
         public void DrawSortToolbar()
         {
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-            
-            EditorGUILayout.LabelField(SortByLabel, GUILayout.Width(64));
+    
+            EditorGUILayout.LabelField($"{SortIcon}{SortByLabel}", GUILayout.Width(80));
 
             _currentSortOption = (SortOption)EditorGUILayout.EnumPopup(_currentSortOption, GUILayout.Width(128));
 
-            string sortOrderLabel = _sortAscending ? SortAscendingLabel : SortDescendingLabel;
-            
-            if (GUILayout.Button(sortOrderLabel, EditorStyles.toolbarButton, GUILayout.Width(96)))
+            if (GUILayout.Button(_sortAscending ? UpArrowIcon : DownArrowIcon, EditorStyles.toolbarButton,
+                    GUILayout.Width(24)))
                 _sortAscending = !_sortAscending;
 
             EditorGUILayout.EndHorizontal();
@@ -111,7 +127,7 @@ namespace TaskManagement.Editor.Controllers
             
             if (project.Tasks.Count == 0)
             {
-                EditorGUILayout.HelpBox(NoTasksMessage, MessageType.Info);
+                EditorGUILayout.HelpBox($"{NoTasksIcon} {NoTasksMessage}", MessageType.Info);
                 
                 return;
             }
@@ -144,7 +160,6 @@ namespace TaskManagement.Editor.Controllers
                 if (task.RemainingTime != currentRemaining)
                 {
                     task.RemainingTime = currentRemaining;
-                    
                     EditorUtility.SetDirty(task);
                 }
                 
@@ -163,28 +178,25 @@ namespace TaskManagement.Editor.Controllers
                 EditorGUI.DrawRect(lastRect, priorityColor);
                 
                 EditorGUILayout.Space(4);
-                
-                EditorGUILayout.LabelField(TaskIdLabel, task.Id);
-                EditorGUILayout.LabelField(TaskTitleLabel, task.Title);
-                EditorGUILayout.LabelField(TaskDescriptionLabel, task.Description);
-                EditorGUILayout.LabelField(TaskStatusLabel, task.Status.ToString());
-                EditorGUILayout.LabelField(TaskPriorityLabel, task.Priority.ToString());
-                EditorGUILayout.LabelField(TaskCategoryLabel, task.Category);
-                EditorGUILayout.LabelField(TaskAssigneeLabel, task.Assignee);
-                EditorGUILayout.LabelField(TaskCreatedDateLabel, task.CreatedDate);
-                EditorGUILayout.LabelField(TaskDueDateLabel, task.DueDate);
-                EditorGUILayout.LabelField(TaskRemainingTimeLabel, task.RemainingTime);
+
+                EditorGUILayout.LabelField($"{IdIcon} {TaskIdLabel}", task.Id);
+                EditorGUILayout.LabelField($"{TaskIcon} {TaskTitleLabel}", task.Title);
+                EditorGUILayout.LabelField($"{DescriptionIcon} {TaskDescriptionLabel}", task.Description);
+                EditorGUILayout.LabelField($"{StatusIcon} {TaskStatusLabel}", task.Status.ToString());
+                EditorGUILayout.LabelField($"{PriorityIcon} {TaskPriorityLabel}", task.Priority.ToString());
+                EditorGUILayout.LabelField($"{CategoryIcon} {TaskCategoryLabel}", task.Category);
+                EditorGUILayout.LabelField($"{UserIcon} {TaskAssigneeLabel}", task.Assignee);
+                EditorGUILayout.LabelField($"{CalendarIcon} {TaskCreatedDateLabel}", task.CreatedDate);
+                EditorGUILayout.LabelField($"{CalendarIcon} {TaskDueDateLabel}", task.DueDate);
+                EditorGUILayout.LabelField($"{TimeIcon} {TaskRemainingTimeLabel}", task.RemainingTime);
 
                 EditorGUILayout.BeginHorizontal();
                 
-                if (GUILayout.Button(TaskEditButtonText, GUILayout.Width(96)))
+                if (GUILayout.Button($"{EditIcon}{TaskEditButtonText}", GUILayout.Width(96)))
                 {
                     Selection.activeObject = task;
-                    
                     _selectedTaskForEdit = task;
-                    
                     IsEditingTask = true;
-
                     _editTitle = task.Title;
                     _editDescription = task.Description;
                     _editStatus = task.Status;
@@ -194,7 +206,7 @@ namespace TaskManagement.Editor.Controllers
                     _editDueDate = task.DueDate;
                 }
 
-                if (GUILayout.Button(TaskDeleteButtonText, GUILayout.Width(64)))
+                if (GUILayout.Button($"{DeleteIcon}{TaskDeleteButtonText}", GUILayout.Width(96)))
                 {
                     project.Tasks.Remove(task);
                     
@@ -209,6 +221,7 @@ namespace TaskManagement.Editor.Controllers
                 
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.EndVertical();
+                
                 EditorGUILayout.Space(4);
             }
 
@@ -274,18 +287,19 @@ namespace TaskManagement.Editor.Controllers
         }
         public void DrawNewTaskSection(ProjectController projectController)
         {
-            EditorGUILayout.LabelField(NewTaskLabel, EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"{AddIcon}{NewTaskLabel}", EditorStyles.boldLabel);
 
-            _taskTitle = EditorGUILayout.TextField(TaskTitleLabel, _taskTitle);
-            _taskDescription = EditorGUILayout.TextField(TaskDescriptionLabel, _taskDescription);
-            _taskStatus = (TaskStatus)EditorGUILayout.EnumPopup(TaskStatusLabel, _taskStatus);
-            _taskPriority = (TaskPriority)EditorGUILayout.EnumPopup(TaskPriorityLabel, _taskPriority);
-            _taskCategory = EditorGUILayout.TextField(TaskCategoryLabel, _taskCategory);
-            _taskAssignee = EditorGUILayout.TextField(TaskAssigneeLabel, _taskAssignee);
+            _taskTitle = EditorGUILayout.TextField($"{TaskIcon} {TaskTitleLabel}", _taskTitle);
+            _taskDescription = EditorGUILayout.TextField($"{DescriptionIcon} {TaskDescriptionLabel}", _taskDescription);
+            _taskStatus = (TaskStatus)EditorGUILayout.EnumPopup($"{StatusIcon} {TaskStatusLabel}", _taskStatus);
+            _taskPriority =
+                (TaskPriority)EditorGUILayout.EnumPopup($"{PriorityIcon} {TaskPriorityLabel}", _taskPriority);
+            _taskCategory = EditorGUILayout.TextField($"{CategoryIcon} {TaskCategoryLabel}", _taskCategory);
+            _taskAssignee = EditorGUILayout.TextField($"{UserIcon} {TaskAssigneeLabel}", _taskAssignee);
             
             EditorGUILayout.BeginHorizontal();
             
-            EditorGUILayout.LabelField(TaskCreatedDateLabel, GUILayout.Width(128));
+            EditorGUILayout.LabelField($"{CalendarIcon} {TaskCreatedDateLabel}", GUILayout.Width(128));
             
             _taskCreatedDate = DateTime.Now.ToString(TaskCreatedDateFormat);
             
@@ -295,7 +309,7 @@ namespace TaskManagement.Editor.Controllers
                 
             EditorGUILayout.BeginHorizontal();
             
-            _taskDueDate = EditorGUILayout.TextField(TaskDueDateLabel, _taskDueDate);
+            _taskDueDate = EditorGUILayout.TextField($"{CalendarIcon} {TaskDueDateLabel}", _taskDueDate);
             
             if (GUILayout.Button(TaskDueDateTodayButtonText, GUILayout.Width(64)))
                 _taskDueDate = DateTime.Now.ToString(TaskCreatedDateFormat);
@@ -307,20 +321,21 @@ namespace TaskManagement.Editor.Controllers
             EditorGUILayout.EndHorizontal();
             
             string remaining = CalculateRemainingTime(_taskDueDate);
+            
             if (!string.IsNullOrEmpty(remaining))
             {
-                _taskRemainingTime = $"{TaskRemainingTimeLabel} {remaining}";
+                _taskRemainingTime = $"{TimeIcon} {TaskRemainingTimeLabel} {remaining}";
                 
                 EditorGUILayout.HelpBox(_taskRemainingTime, MessageType.None);
             }
 
-            if (!GUILayout.Button(CreateNewTaskButtonText, GUILayout.Width(128)))
+            if (!GUILayout.Button($"{AddIcon}{CreateNewTaskButtonText}", GUILayout.Width(128)))
                 return;
     
             if (string.IsNullOrWhiteSpace(_taskTitle))
             {
-                EditorUtility.DisplayDialog(NewTaskTitleEmptyDisplayDialogTitle, NewTaskTitleEmptyDisplayDialogMessage,
-                    NewTaskTitleEmptyDisplayDialogOk);
+                EditorUtility.DisplayDialog($"{ErrorIcon}{NewTaskTitleEmptyDisplayDialogTitle}",
+                    NewTaskTitleEmptyDisplayDialogMessage, NewTaskTitleEmptyDisplayDialogOk);
                 
                 return;
             }
@@ -352,7 +367,7 @@ namespace TaskManagement.Editor.Controllers
 
             if (project.Tasks.Exists(t => t.Title == taskTitle))
             {
-                EditorUtility.DisplayDialog(DuplicateTaskDialogTitle, DuplicateTaskDialogMessage,
+                EditorUtility.DisplayDialog($"{ErrorIcon}{DuplicateTaskDialogTitle}", DuplicateTaskDialogMessage,
                     DuplicateTaskDialogOk);
                 
                 return;
@@ -402,18 +417,19 @@ namespace TaskManagement.Editor.Controllers
         {
             EditorGUILayout.Space(8);
             
-            EditorGUILayout.LabelField(EditTaskLabel, EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"{EditIcon}{EditTaskLabel}", EditorStyles.boldLabel);
 
-            _editTitle = EditorGUILayout.TextField(TaskTitleLabel, _editTitle);
-            _editDescription = EditorGUILayout.TextField(TaskDescriptionLabel, _editDescription);
-            _editStatus = (TaskStatus)EditorGUILayout.EnumPopup(TaskStatusLabel, _editStatus);
-            _editPriority = (TaskPriority)EditorGUILayout.EnumPopup(TaskPriorityLabel, _editPriority);
-            _editCategory = EditorGUILayout.TextField(TaskCategoryLabel, _editCategory);
-            _editAssignee = EditorGUILayout.TextField(TaskAssigneeLabel, _editAssignee);
+            _editTitle = EditorGUILayout.TextField($"{TaskIcon} {TaskTitleLabel}", _editTitle);
+            _editDescription = EditorGUILayout.TextField($"{DescriptionIcon} {TaskDescriptionLabel}", _editDescription);
+            _editStatus = (TaskStatus)EditorGUILayout.EnumPopup($"{StatusIcon} {TaskStatusLabel}", _editStatus);
+            _editPriority = (TaskPriority)EditorGUILayout.EnumPopup($"{PriorityIcon} {TaskPriorityLabel}", _editPriority);
+            _editCategory = EditorGUILayout.TextField($"{CategoryIcon} {TaskCategoryLabel}", _editCategory);
+            _editAssignee = EditorGUILayout.TextField($"{UserIcon} {TaskAssigneeLabel}", _editAssignee);
             
             EditorGUILayout.BeginHorizontal();
             
-            _editDueDate = EditorGUILayout.TextField(TaskDueDateLabel, _editDueDate);
+            _editDueDate = EditorGUILayout.TextField($"{CalendarIcon} {TaskDueDateLabel}", _editDueDate);
+            
             if (GUILayout.Button(TaskDueDateTodayButtonText, GUILayout.Width(64)))
                 _editDueDate = DateTime.Now.ToString(TaskCreatedDateFormat);
             if (GUILayout.Button(TaskDueDateAddOneDayButtonText, GUILayout.Width(32)))
@@ -424,13 +440,14 @@ namespace TaskManagement.Editor.Controllers
             EditorGUILayout.EndHorizontal();
 
             string remaining = CalculateRemainingTime(_editDueDate);
-            EditorGUILayout.HelpBox($"{TaskRemainingTimeLabel} {remaining}", MessageType.None);
+            
+            EditorGUILayout.HelpBox($"{TimeIcon} {TaskRemainingTimeLabel} {remaining}", MessageType.None);
 
             EditorGUILayout.BeginHorizontal();
             
-            if (GUILayout.Button(EditTaskSaveChangesButtonText, GUILayout.Width(128)))
+            if (GUILayout.Button($"{SaveIcon}{EditTaskSaveChangesButtonText}", GUILayout.Width(128)))
                 ApplyTaskEdits();
-            if (GUILayout.Button(EditTaskCancelEditButtonText, GUILayout.Width(96)))
+            if (GUILayout.Button($"{CancelIcon}{EditTaskCancelEditButtonText}", GUILayout.Width(96)))
             {
                 IsEditingTask = false;
                 _selectedTaskForEdit = null;

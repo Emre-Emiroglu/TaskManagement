@@ -24,11 +24,17 @@ namespace TaskManagement.Editor.Controllers
         private const string DeleteProjectDialogOk = "Yes, Delete";
         private const string DeleteProjectDialogCancel = "Cancel";
         public const string TaskManagementProjectsPath = "Assets/TaskManagement/Projects/";
+        private const string CreateProjectIcon = "✚ ";
+        private const string DeleteProjectIcon = "✖ ";
+        private const string ProjectIcon = "📁 ";
+        private const string NoProjectFoundIcon = "⚠️ ";
         #endregion
         
         #region StaticReadonlyFields
-        private static readonly Color DeleteProjectColor = Color.red;
-        private static readonly Color DefaultEditProjectColor = Color.white;
+        private static readonly Color DeleteProjectColor = new(0.75f, 0.25f, 0.25f, 0.75f);
+        private static readonly Color DefaultEditProjectColor = new(0.125f, 0.125f, 0.125f, 0.75f);
+        private static readonly Color ProjectNameBackgroundColor = new(0.25f, 0.25f, 0.25f, 0.75f);
+        private static readonly Color ProjectSectionBackgroundColor = new(0.175f, 0.175f, 0.175f, 0.75f);
         #endregion
 
         #region Fields
@@ -65,32 +71,75 @@ namespace TaskManagement.Editor.Controllers
             if (_projects.Count > 0)
                 return false;
             
-            EditorGUILayout.HelpBox(NoProjectFoundMessage, MessageType.Info);
+            Rect bgRect = EditorGUILayout.BeginVertical();
             
-            _projectName = EditorGUILayout.TextField(CreateNewProjectNameLabel, _projectName);
+            EditorGUI.DrawRect(bgRect, ProjectSectionBackgroundColor);
 
-            if (GUILayout.Button(CreateNewProjectButtonText, GUILayout.Width(128)))
+            EditorGUILayout.Space(8);
+            
+            EditorGUILayout.HelpBox($"{NoProjectFoundIcon} {NoProjectFoundMessage}", MessageType.Info);
+            
+            EditorGUILayout.Space(4);
+            
+            EditorGUILayout.BeginHorizontal();
+            
+            EditorGUILayout.LabelField(CreateNewProjectNameLabel, GUILayout.Width(96));
+            
+            _projectName = EditorGUILayout.TextField(_projectName);
+            
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.Space(8);
+
+            if (GUILayout.Button($"{CreateProjectIcon}{CreateNewProjectButtonText}", GUILayout.Width(128)))
                 CreateNewProject(_projectName);
-                
+            
+            EditorGUILayout.EndVertical();
+
             return true;
         }
         public void DrawProjectSelector()
         {
-            EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
+            Rect bgRect = EditorGUILayout.BeginVertical();
             
+            EditorGUI.DrawRect(bgRect, ProjectSectionBackgroundColor);
+            
+            EditorGUILayout.Space(4);
+            
+            EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
+    
+            GUILayout.Label($"{ProjectIcon}", GUILayout.Width(32));
+            EditorGUILayout.LabelField(SelectProjectLabel, GUILayout.Width(96));
+    
             string[] names = _projects.ConvertAll(p => p.ProjectName).ToArray();
             
             _selectedProjectIndex = Mathf.Clamp(_selectedProjectIndex, 0, _projects.Count - 1);
-            _selectedProjectIndex = EditorGUILayout.Popup(SelectProjectLabel, _selectedProjectIndex, names);
+    
+            EditorGUI.BeginChangeCheck();
+            
+            Color originalColor = GUI.backgroundColor;
+            
+            GUI.backgroundColor = ProjectNameBackgroundColor;
+            
+            _selectedProjectIndex = EditorGUILayout.Popup(_selectedProjectIndex, names);
+            
+            GUI.backgroundColor = originalColor;
+    
+            GUILayout.FlexibleSpace();
 
-            if (GUILayout.Button(CreateNewProjectButtonText, EditorStyles.toolbarButton, GUILayout.Width(128)))
+            if (GUILayout.Button($"{CreateProjectIcon}{CreateNewProjectButtonText}", EditorStyles.toolbarButton,
+                    GUILayout.Width(128)))
             {
                 _projectName = NewProjectDefaultName;
                 
                 CreateNewProject(_projectName);
             }
-            
+    
             EditorGUILayout.EndHorizontal();
+            
+            EditorGUILayout.Space(4);
+    
+            EditorGUILayout.EndVertical();
         }
         public void DrawProjectEditor()
         {
@@ -98,18 +147,38 @@ namespace TaskManagement.Editor.Controllers
                 return;
 
             ProjectData project = ProjectData;
-            
+    
             if (!project)
                 return;
+    
+            EditorGUILayout.Space(8);
+            
+            Rect bgRect = EditorGUILayout.BeginVertical();
+            
+            EditorGUI.DrawRect(bgRect, ProjectSectionBackgroundColor);
             
             EditorGUILayout.Space(4);
-            
+    
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+    
+            EditorGUILayout.BeginHorizontal();
+            
+            GUILayout.Label($"{ProjectIcon}", GUILayout.Width(32));
             
             EditorGUILayout.LabelField(EditProjectLabel, EditorStyles.boldLabel);
-
-            string newName = EditorGUILayout.TextField(EditProjectNameLabel, project.ProjectName);
             
+            EditorGUILayout.EndHorizontal();
+    
+            EditorGUILayout.Space(4);
+
+            EditorGUILayout.BeginHorizontal();
+            
+            EditorGUILayout.LabelField(EditProjectNameLabel, GUILayout.Width(96));
+            
+            string newName = EditorGUILayout.TextField(project.ProjectName);
+            
+            EditorGUILayout.EndHorizontal();
+    
             if (newName != project.ProjectName)
             {
                 project.ProjectName = newName;
@@ -118,12 +187,16 @@ namespace TaskManagement.Editor.Controllers
                 
                 AssetDatabase.SaveAssets();
             }
+    
+            EditorGUILayout.Space(8);
+    
+            EditorGUILayout.BeginHorizontal();
             
-            EditorGUILayout.Space(6);
-            
+            GUILayout.FlexibleSpace();
+    
             GUI.backgroundColor = DeleteProjectColor;
             
-            if (GUILayout.Button(DeleteProjectButtonText, GUILayout.Width(128)))
+            if (GUILayout.Button($"{DeleteProjectIcon}{DeleteProjectButtonText}", GUILayout.Width(128)))
             {
                 bool confirm = EditorUtility.DisplayDialog(DeleteProjectButtonText,
                     $"{DeleteProjectDialogPrefix}{project.ProjectName}{DeleteProjectDialogSuffix}",
@@ -132,9 +205,17 @@ namespace TaskManagement.Editor.Controllers
                 if (confirm)
                     DeleteProject(project);
             }
-
-            GUI.backgroundColor =DefaultEditProjectColor;
-
+            
+            GUI.backgroundColor = DefaultEditProjectColor;
+    
+            EditorGUILayout.EndHorizontal();
+            
+            EditorGUILayout.Space(4);
+            
+            EditorGUILayout.EndVertical();
+            
+            EditorGUILayout.Space(4);
+    
             EditorGUILayout.EndVertical();
         }
         private void DeleteProject(ProjectData project)
