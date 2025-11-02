@@ -17,7 +17,7 @@ namespace TaskManagement.Editor.Data
         [SerializeField] private string assignee;
         [SerializeField] private string createdDate;
         [SerializeField] private string dueDate;
-        [SerializeField] private bool isArchived;
+        [SerializeField] private string remainingTime;
         #endregion
         
         #region Properities
@@ -66,10 +66,10 @@ namespace TaskManagement.Editor.Data
             get => dueDate;
             set => dueDate = value;
         }
-        public bool IsArchived
+        public string RemainingTime
         {
-            get => isArchived;
-            set => isArchived = value;
+            get => remainingTime;
+            set => remainingTime = value;
         }
         #endregion
     }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using TaskManagement.Editor.Data;
 using TaskManagement.Editor.Enums;
@@ -35,7 +36,13 @@ namespace TaskManagement.Editor.Windows
         private const string TaskAssigneeLabel = "Assignee:";
         private const string TaskCreatedDateLabel = "Created Date:";
         private const string TaskDueDateLabel = "Due Date:";
-        private const string TaskIsArchivedLabel = "Is Archived:";
+        private const string TaskCreatedDateFormat = "yyyy-MM-dd";
+        private const string TaskDueDateTodayButtonText = "Today";
+        private const string TaskDueDateAddOneDayButtonText = "+1";
+        private const string TaskDueDateRemoveOneDayButtonText = "-1";
+        private const string TaskRemainingTime = "-1";
+        private const string TaskRemainingTimePrefix = "Remaining Time:";
+        private const string InvalidDateFormatInfoMessage = "Invalid date format";
         private const string TaskEditButtonText = "Edit";
         private const string TaskDeleteButtonText = "Delete";
         private const string NewTaskLabel = "Add new task.";
@@ -74,7 +81,7 @@ namespace TaskManagement.Editor.Windows
         private string _taskAssignee = string.Empty;
         private string _taskCreatedDate = string.Empty;
         private string _taskDueDate = string.Empty;
-        private bool _taskIsArchived;
+        private string _taskRemainingTime = string.Empty;
         #endregion
         
         #region Core
@@ -170,6 +177,15 @@ namespace TaskManagement.Editor.Windows
             
             foreach (TaskData task in project.Tasks.ToList())
             {
+                string currentRemaining = CalculateRemainingTime(task.DueDate);
+                
+                if (task.RemainingTime != currentRemaining)
+                {
+                    task.RemainingTime = currentRemaining;
+                    
+                    EditorUtility.SetDirty(task);
+                }
+                
                 Color originalColor = GUI.backgroundColor;
                 Color backgroundColor = GetTaskBackgroundColor(task.Status);
                 Color priorityColor = GetPriorityColor(task.Priority);
@@ -191,7 +207,7 @@ namespace TaskManagement.Editor.Windows
                 EditorGUILayout.LabelField(TaskAssigneeLabel, task.Assignee);
                 EditorGUILayout.LabelField(TaskCreatedDateLabel, task.CreatedDate);
                 EditorGUILayout.LabelField(TaskDueDateLabel, task.DueDate);
-                EditorGUILayout.LabelField(TaskIsArchivedLabel, task.IsArchived.ToString());
+                EditorGUILayout.LabelField(TaskRemainingTime, task.RemainingTime);
 
                 EditorGUILayout.BeginHorizontal();
                 if (GUILayout.Button(TaskEditButtonText, GUILayout.Width(96)))
@@ -226,25 +242,46 @@ namespace TaskManagement.Editor.Windows
             _taskPriority = (TaskPriority)EditorGUILayout.EnumPopup(TaskPriorityLabel, _taskPriority);
             _taskCategory = EditorGUILayout.TextField(TaskCategoryLabel, _taskCategory);
             _taskAssignee = EditorGUILayout.TextField(TaskAssigneeLabel, _taskAssignee);
-            _taskCreatedDate = EditorGUILayout.TextField(TaskCreatedDateLabel, _taskCreatedDate);
+            
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField(TaskCreatedDateLabel, GUILayout.Width(128));
+            _taskCreatedDate = DateTime.Now.ToString(TaskCreatedDateFormat);
+            EditorGUILayout.LabelField(_taskCreatedDate);
+            EditorGUILayout.EndHorizontal();
+                
+            EditorGUILayout.BeginHorizontal();
             _taskDueDate = EditorGUILayout.TextField(TaskDueDateLabel, _taskDueDate);
-            _taskIsArchived = EditorGUILayout.Toggle(TaskIsArchivedLabel, _taskIsArchived);
+            if (GUILayout.Button(TaskDueDateTodayButtonText, GUILayout.Width(64)))
+                _taskDueDate = DateTime.Now.ToString(TaskCreatedDateFormat);
+            if (GUILayout.Button(TaskDueDateAddOneDayButtonText, GUILayout.Width(32)))
+                _taskDueDate = AdjustDate(_taskDueDate, 1);
+            if (GUILayout.Button(TaskDueDateRemoveOneDayButtonText, GUILayout.Width(32)))
+                _taskDueDate = AdjustDate(_taskDueDate, -1);
+            EditorGUILayout.EndHorizontal();
+            
+            string remaining = CalculateRemainingTime(_taskDueDate);
+            if (!string.IsNullOrEmpty(remaining))
+            {
+                _taskRemainingTime = $"{TaskRemainingTimePrefix} {remaining}";
+                
+                EditorGUILayout.HelpBox(_taskRemainingTime, MessageType.None);
+            }
 
             if (!GUILayout.Button(CreateNewTaskButtonText, GUILayout.Width(128)))
                 return;
-            
+    
             if (string.IsNullOrWhiteSpace(_taskTitle))
             {
                 EditorUtility.DisplayDialog(NewTaskTitleEmptyDisplayDialogTitle, NewTaskTitleEmptyDisplayDialogMessage,
                     NewTaskTitleEmptyDisplayDialogOk);
                 return;
             }
-
+            
             _taskId = GUID.Generate().ToString();
-            
+
             CreateNewTask(_taskId, _taskTitle, _taskDescription, _taskStatus, _taskPriority, _taskCategory,
-                _taskAssignee, _taskCreatedDate, _taskDueDate, _taskIsArchived);
-            
+                _taskAssignee, _taskCreatedDate, _taskDueDate, _taskRemainingTime);
+    
             ResetTaskFields();
         }
         private void CreateNewProject(string projectName)
@@ -264,7 +301,7 @@ namespace TaskManagement.Editor.Windows
         }
         private void CreateNewTask(string id, string taskTitle, string description, TaskStatus status,
             TaskPriority priority, string category, string assignee, string createdDate, string dueDate,
-            bool isArchived)
+            string remainingTime)
         {
             ProjectData project = _projects[_selectedProjectIndex];
 
@@ -288,12 +325,13 @@ namespace TaskManagement.Editor.Windows
             task.Assignee = assignee;
 
             if (string.IsNullOrEmpty(createdDate))
-                createdDate = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+                createdDate = DateTime.Now.ToString(TaskCreatedDateFormat);
             
             task.CreatedDate = createdDate;
             
             task.DueDate = dueDate;
-            task.IsArchived = isArchived;
+
+            task.RemainingTime = remainingTime;
             
             project.Tasks.Add(task);
             
@@ -310,7 +348,7 @@ namespace TaskManagement.Editor.Windows
             _taskAssignee = string.Empty;
             _taskCreatedDate = string.Empty;
             _taskDueDate = string.Empty;
-            _taskIsArchived = false;
+            _taskRemainingTime = string.Empty;
         }
         private static Color GetTaskBackgroundColor(TaskStatus status)
         {
@@ -330,6 +368,33 @@ namespace TaskManagement.Editor.Windows
                 TaskPriority.Normal => TaskPriorityNormalPriorityColor,
                 TaskPriority.High => TaskPriorityHighPriorityColor,
                 _ => TaskPriorityDefaultBackgroundColor
+            };
+        }
+        private static string AdjustDate(string date, int days)
+        {
+            if (!DateTime.TryParse(date, out DateTime target))
+                target = DateTime.Now;
+
+            target = target.AddDays(days);
+            
+            return target.ToString(TaskCreatedDateFormat);
+        }
+        private static string CalculateRemainingTime(string dueDate)
+        {
+            if (string.IsNullOrEmpty(dueDate))
+                return string.Empty;
+
+            if (!DateTime.TryParse(dueDate, out DateTime due))
+                return InvalidDateFormatInfoMessage;
+
+            DateTime now = DateTime.Now.Date;
+            int remaining = (due - now).Days;
+
+            return remaining switch
+            {
+                > 0 => $"{remaining} day{(remaining > 1 ? "s" : "")} left",
+                0 => "Due today",
+                _ => $"{Mathf.Abs(remaining)} day{(Mathf.Abs(remaining) > 1 ? "s" : "")} overdue"
             };
         }
         #endregion
