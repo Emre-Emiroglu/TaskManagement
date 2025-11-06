@@ -208,9 +208,17 @@ namespace TaskManagement.Editor.Controllers
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
+            EditorGUILayout.BeginHorizontal();
+
             EditorGUILayout.LabelField($"{ProjectIcon} Edit Project", EditorStyles.boldLabel);
             
+            EditorGUILayout.EndHorizontal();
+            
+            EditorGUILayout.BeginHorizontal();
+            
             string newName = EditorGUILayout.TextField("Project Name:", project.ProjectName);
+            
+            EditorGUILayout.EndHorizontal();
 
             if (newName != project.ProjectName)
             {
@@ -218,6 +226,8 @@ namespace TaskManagement.Editor.Controllers
                 EditorUtility.SetDirty(project);
                 AssetDatabase.SaveAssets();
             }
+            
+            EditorGUILayout.BeginHorizontal();
 
             GUILayout.FlexibleSpace();
 
@@ -232,6 +242,8 @@ namespace TaskManagement.Editor.Controllers
                     DeleteProject(project);
             }
             GUI.backgroundColor = DefaultEditProjectColor;
+            
+            EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.EndVertical();
         }
