@@ -8,24 +8,16 @@ namespace TaskManagement.Editor.Data
     {
         #region Fields
         [Header("Task Data Fields")]
-        [SerializeField] private string id;
         [SerializeField] private string title;
         [TextArea(2, 16)] [SerializeField] private string description;
         [SerializeField] private TaskStatus status;
         [SerializeField] private TaskPriority priority;
         [SerializeField] private string category;
         [SerializeField] private string assignee;
-        [SerializeField] private string createdDate;
         [SerializeField] private string dueDate;
-        [SerializeField] private string remainingTime;
         #endregion
         
         #region Properities
-        public string Id
-        {
-            get => id;
-            set => id = value;
-        }
         public string Title
         {
             get => title;
@@ -56,20 +48,11 @@ namespace TaskManagement.Editor.Data
             get => assignee;
             set => assignee = value;
         }
-        public string CreatedDate
-        {
-            get => createdDate;
-            set => createdDate = value;
-        }
+
         public string DueDate
         {
             get => dueDate;
             set => dueDate = value;
-        }
-        public string RemainingTime
-        {
-            get => remainingTime;
-            set => remainingTime = value;
         }
         #endregion
     }

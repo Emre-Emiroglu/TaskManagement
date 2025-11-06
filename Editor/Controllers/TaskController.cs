@@ -230,22 +230,17 @@ namespace TaskManagement.Editor.Controllers
         {
             ProjectData project = controller.ProjectData;
             
-            string id = GUID.Generate().ToString();
-
             string path = $"{ProjectController.TaskManagementProjectsPath}{project.ProjectName}/Tasks";
             
             TaskData task = EditorAssetUtility.CreateOrLoadAsset<TaskData>(path, _newTitle);
 
-            task.Id = id;
             task.Title = _newTitle;
             task.Description = _newDescription;
             task.Status = _newStatus;
             task.Priority = _newPriority;
             task.Category = _newCategory;
             task.Assignee = _newAssignee;
-            task.CreatedDate = DateTime.Now.ToString(DateFormat);
             task.DueDate = _newDueDate;
-            task.RemainingTime = CalculateRemainingTime(_newDueDate);
 
             project.Tasks.Add(task);
             
@@ -288,7 +283,6 @@ namespace TaskManagement.Editor.Controllers
             _selectedTask.Category = _editCategory;
             _selectedTask.Assignee = _editAssignee;
             _selectedTask.DueDate = _editDueDate;
-            _selectedTask.RemainingTime = CalculateRemainingTime(_editDueDate);
 
             EditorUtility.SetDirty(_selectedTask);
             
