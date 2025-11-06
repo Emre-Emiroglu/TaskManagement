@@ -24,6 +24,13 @@ namespace TaskManagement.Editor.Controllers
         private const string DeleteProjectDialogOk = "Yes, Delete";
         private const string DeleteProjectDialogCancel = "Cancel";
         public const string TaskManagementProjectsPath = "Assets/TaskManagement/Projects/";
+        private const string CreateProjectInvalidProjectNameDialogTittle = "Invalid Project Name";
+        private const string CreateProjectInvalidProjectNameDialogMessage = "Project name cannot be empty.";
+        private const string CreateProjectInvalidProjectNameDialogOk = "OK";
+        private const string DuplicateProjectInvalidProjectNameDialogTittle = "Duplicate Project";
+        private const string DuplicateProjectInvalidProjectNameDialogMessagePrefix = "A project named '";
+        private const string DuplicateProjectInvalidProjectNameDialogMessageSuffix = "' already exists.";
+        private const string DuplicateProjectInvalidProjectNameDialogOk = "OK";
         private const string CreateProjectIcon = "✚ ";
         private const string DeleteProjectIcon = "✖ ";
         private const string ProjectIcon = "📁 ";
@@ -107,14 +114,12 @@ namespace TaskManagement.Editor.Controllers
             GUI.backgroundColor = originalColor;
     
             GUILayout.FlexibleSpace();
+            
+            _projectName = EditorGUILayout.TextField(_projectName);
 
             if (GUILayout.Button($"{CreateProjectIcon}{CreateNewProjectButtonText}", EditorStyles.toolbarButton,
                     GUILayout.Width(128)))
-            {
-                _projectName = NewProjectDefaultName;
-                
                 CreateNewProject(_projectName);
-            }
     
             EditorGUILayout.EndHorizontal();
         }
@@ -204,17 +209,35 @@ namespace TaskManagement.Editor.Controllers
         }
         private void CreateNewProject(string projectName)
         {
+            if (string.IsNullOrWhiteSpace(projectName))
+            {
+                EditorUtility.DisplayDialog(CreateProjectInvalidProjectNameDialogTittle,
+                    CreateProjectInvalidProjectNameDialogMessage, CreateProjectInvalidProjectNameDialogOk);
+                
+                return;
+            }
+            
+            if (_projects.Any(p => p.ProjectName.Equals(projectName, System.StringComparison.OrdinalIgnoreCase)))
+            {
+                EditorUtility.DisplayDialog(DuplicateProjectInvalidProjectNameDialogTittle,
+                    $"{DuplicateProjectInvalidProjectNameDialogMessagePrefix}{projectName}{DuplicateProjectInvalidProjectNameDialogMessageSuffix}",
+                    DuplicateProjectInvalidProjectNameDialogOk);
+                
+                return;
+            }
+            
             string path = $"{TaskManagementProjectsPath}{projectName}";
             
             ProjectData project = EditorAssetUtility.CreateOrLoadAsset<ProjectData>(path, projectName);
-            
+
             project.ProjectName = projectName;
-            project.Tasks = new List<TaskData>();
             
+            project.Tasks = new List<TaskData>();
+
             _projects.Add(project);
             
             _selectedProjectIndex = _projects.Count - 1;
-            
+
             EditorUtility.SetDirty(project);
             
             AssetDatabase.SaveAssets();
