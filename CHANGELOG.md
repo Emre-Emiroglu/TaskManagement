@@ -1,7 +1,14 @@
-﻿## [1.0.0] - 2025-10-06
+﻿## [1.0.0] - 2025-11-06
 
 ### Added
-- N/A
+- Introduced the Task Management Editor Window for creating and managing tasks directly inside Unity Editor.
+- Added ProjectController for creating, selecting, renaming, and deleting project assets.
+- Added TaskController for creating, editing, sorting, and deleting task assets.
+- Implemented ScriptableObject-based architecture for persistent project and task data storage.
+- Added sorting system (by Assignee, Priority, Status, Remaining Time).
+- Added task time calculation (remaining and overdue days).
+- Added EditorAssetUtility for creating or loading ScriptableObject assets safely.
+- Added EditMode unit tests to validate task and project CRUD operations.
 
 ### Changed
 - N/A
