@@ -4,17 +4,12 @@ using UnityEngine;
 
 namespace TaskManagement.Editor.Window
 {
+    /// <summary>
+    /// Main editor window for managing projects and tasks inside Unity.
+    /// Provides a full UI for creating, editing, sorting, and deleting tasks.
+    /// </summary>
     public sealed class TaskManagementEditor : EditorWindow
     {
-        #region Constants
-        private const string MenuItemName = "Tools/Task Management Editor";
-        private const string TitleContent = "Task Management Editor";
-        private const int MinXSize = 960;
-        private const int MinYSize = 540;
-        private const int MaxXSize = 1920;
-        private const int MaxYSize = 1080;
-        #endregion
-        
         #region ReadonlyFields
         private readonly ProjectController _projectController = new();
         private readonly TaskController _taskController = new();
@@ -25,14 +20,14 @@ namespace TaskManagement.Editor.Window
         #endregion
         
         #region Core
-        [MenuItem(MenuItemName)]
+        [MenuItem("Tools/Task Management Editor")]
         private static void ShowWindow()
         {
             TaskManagementEditor window = GetWindow<TaskManagementEditor>();
             
-            window.titleContent = new GUIContent(TitleContent);
-            window.minSize = new Vector2(MinXSize, MinYSize);
-            window.maxSize = new Vector2(MaxXSize, MaxYSize);
+            window.titleContent = new GUIContent("Task Management Editor");
+            window.minSize = new Vector2(960, 540);
+            window.maxSize = new Vector2(1920, 1080);
             
             window.Show();
         }
