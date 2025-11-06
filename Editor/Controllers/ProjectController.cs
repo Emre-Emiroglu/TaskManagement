@@ -7,22 +7,15 @@ using UnityEngine;
 
 namespace TaskManagement.Editor.Controllers
 {
+    /// <summary>
+    /// Handles all project-related operations in the Task Management system.
+    /// Responsible for creating, loading, selecting, editing, and deleting project assets in the Unity Editor.
+    /// </summary>
     public sealed class ProjectController
     {
         #region Constants
         private const string NewProjectDefaultName = "NewProject";
         private const string ProjectDataFilter = "t:ProjectData";
-        private const string NoProjectFoundMessage = "No projects found yet.";
-        private const string CreateNewProjectNameLabel = "Project Name:";
-        private const string CreateNewProjectButtonText = "Create new project.";
-        private const string SelectProjectLabel = "Active Project:";
-        private const string EditProjectLabel = "Edit Project";
-        private const string EditProjectNameLabel = "Project Name:";
-        private const string DeleteProjectButtonText = "Delete Project";
-        private const string DeleteProjectDialogPrefix = "Are you sure you want to delete the project '";
-        private const string DeleteProjectDialogSuffix = "'?\nThis will also delete all its tasks.";
-        private const string DeleteProjectDialogOk = "Yes, Delete";
-        private const string DeleteProjectDialogCancel = "Cancel";
         public const string TaskManagementProjectsPath = "Assets/TaskManagement/Projects/";
         private const string CreateProjectInvalidProjectNameDialogTittle = "Invalid Project Name";
         private const string CreateProjectInvalidProjectNameDialogMessage = "Project name cannot be empty.";
@@ -31,10 +24,21 @@ namespace TaskManagement.Editor.Controllers
         private const string DuplicateProjectInvalidProjectNameDialogMessagePrefix = "A project named '";
         private const string DuplicateProjectInvalidProjectNameDialogMessageSuffix = "' already exists.";
         private const string DuplicateProjectInvalidProjectNameDialogOk = "OK";
-        private const string CreateProjectIcon = "✚ ";
-        private const string DeleteProjectIcon = "✖ ";
-        private const string ProjectIcon = "📁 ";
         private const string NoProjectFoundIcon = "⚠️ ";
+        private const string NoProjectFoundMessage = "No projects found yet.";
+        private const string CreateNewProjectNameLabel = "Project Name:";
+        private const string CreateProjectIcon = "✚ ";
+        private const string CreateNewProjectButtonText = "Create new project.";
+        private const string ProjectIcon = "📁 ";
+        private const string SelectProjectLabel = "Active Project:";
+        private const string EditProjectLabel = "Edit Project";
+        private const string EditProjectNameLabel = "Project Name:";
+        private const string DeleteProjectIcon = "✖ ";
+        private const string DeleteProjectButtonText = "Delete Project";
+        private const string DeleteProjectDialogPrefix = "Are you sure you want to delete the project '";
+        private const string DeleteProjectDialogSuffix = "'?\nThis will also delete all its tasks.";
+        private const string DeleteProjectDialogOk = "Yes, Delete";
+        private const string DeleteProjectDialogCancel = "Cancel";
         #endregion
         
         #region StaticReadonlyFields
@@ -43,35 +47,128 @@ namespace TaskManagement.Editor.Controllers
         private static readonly Color ProjectNameBackgroundColor = new(0.25f, 0.25f, 0.25f, 0.6f);
         #endregion
 
+        #region ReadonlyFields
+        private readonly List<ProjectData> _projects = new();
+        #endregion
+
         #region Fields
-        private List<ProjectData> _projects = new();
         private int _selectedProjectIndex = -1;
         private string _projectName = NewProjectDefaultName;
         #endregion
 
         #region Getters
+        /// <summary>
+        /// Gets the currently selected <see cref="ProjectData"/> instance.
+        /// Returns <c>null</c> if no project is selected or the index is invalid.
+        /// </summary>
         public ProjectData ProjectData => _selectedProjectIndex >= 0 && _selectedProjectIndex < _projects.Count
             ? _projects[_selectedProjectIndex]
             : null;
         #endregion
 
         #region Executes
+        /// <summary>
+        /// Loads all existing <see cref="ProjectData"/> assets from the Unity project.
+        /// This is typically called when the editor window is initialized or refreshed.
+        /// </summary>
         public void LoadProjects()
         {
+            _projects.Clear();
+            
             string[] guids = AssetDatabase.FindAssets(ProjectDataFilter);
-            
-            _projects = new List<ProjectData>();
-            
+
             foreach (string guid in guids)
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 
                 ProjectData project = AssetDatabase.LoadAssetAtPath<ProjectData>(path);
                 
-                if (project != null)
+                if (project)
                     _projects.Add(project);
             }
         }
+        private void DeleteProject(ProjectData project)
+        {
+            if (!project)
+                return;
+
+            string projectPath = AssetDatabase.GetAssetPath(project);
+            string projectFolderPath = $"{TaskManagementProjectsPath}{project.ProjectName}";
+            
+            foreach (string taskPath in project.Tasks.ToList().Select(AssetDatabase.GetAssetPath)
+                         .Where(taskPath => !string.IsNullOrEmpty(taskPath))) 
+                AssetDatabase.DeleteAsset(taskPath);
+
+            if (!string.IsNullOrEmpty(projectPath))
+                AssetDatabase.DeleteAsset(projectPath);
+            
+            if (System.IO.Directory.Exists(projectFolderPath))
+                AssetDatabase.DeleteAsset(projectFolderPath);
+
+            _projects.Remove(project);
+
+            _selectedProjectIndex = Mathf.Clamp(_selectedProjectIndex - 1, 0, _projects.Count - 1);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            
+            LoadProjects();
+        }
+        private void CreateNewProject(string projectName)
+        {
+            if (!ValidateProjectName(projectName))
+                return;
+
+            if (ProjectExists(projectName))
+                return;
+            
+            string path = $"{TaskManagementProjectsPath}{projectName}";
+            
+            ProjectData project = EditorAssetUtility.CreateOrLoadAsset<ProjectData>(path, projectName);
+
+            project.ProjectName = projectName;
+            project.Tasks = new List<TaskData>();
+
+            _projects.Add(project);
+            
+            _selectedProjectIndex = _projects.Count - 1;
+
+            EditorUtility.SetDirty(project);
+            
+            AssetDatabase.SaveAssets();
+            
+            LoadProjects();
+        }
+        private static bool ValidateProjectName(string name)
+        {
+            if (!string.IsNullOrWhiteSpace(name))
+                return true;
+
+            EditorUtility.DisplayDialog(CreateProjectInvalidProjectNameDialogTittle,
+                CreateProjectInvalidProjectNameDialogMessage, CreateProjectInvalidProjectNameDialogOk);
+            
+            return false;
+        }
+        private bool ProjectExists(string name)
+        {
+            if (!_projects.Any(p => p.ProjectName.Equals(name, System.StringComparison.OrdinalIgnoreCase)))
+                return false;
+
+            EditorUtility.DisplayDialog(DuplicateProjectInvalidProjectNameDialogTittle,
+                $"{DuplicateProjectInvalidProjectNameDialogMessagePrefix}{name}{DuplicateProjectInvalidProjectNameDialogMessageSuffix}",
+                DuplicateProjectInvalidProjectNameDialogOk);
+            
+            return true;
+        }
+        
+        /// <summary>
+        /// Draws the initial creation prompt when no projects exist.
+        /// Allows users to create the first project.
+        /// </summary>
+        /// <returns>
+        /// Returns <c>true</c> if the prompt is shown (meaning no projects exist yet),
+        /// otherwise <c>false</c>.
+        /// </returns>
         public bool DrawProjectCreationPrompt()
         {
             if (_projects.Count > 0)
@@ -92,26 +189,29 @@ namespace TaskManagement.Editor.Controllers
             
             return true;
         }
+        
+        /// <summary>
+        /// Draws the toolbar section for selecting existing projects or creating a new one.
+        /// </summary>
         public void DrawProjectSelector()
         {
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
     
             GUILayout.Label($"{ProjectIcon}", GUILayout.Width(32));
             EditorGUILayout.LabelField(SelectProjectLabel, GUILayout.Width(96));
-    
-            string[] names = _projects.ConvertAll(p => p.ProjectName).ToArray();
             
-            _selectedProjectIndex = Mathf.Clamp(_selectedProjectIndex, 0, _projects.Count - 1);
-    
-            EditorGUI.BeginChangeCheck();
-            
-            Color originalColor = GUI.backgroundColor;
-            
-            GUI.backgroundColor = ProjectNameBackgroundColor;
-            
-            _selectedProjectIndex = EditorGUILayout.Popup(_selectedProjectIndex, names);
-            
-            GUI.backgroundColor = originalColor;
+            if (_projects.Count > 0)
+            {
+                string[] names = _projects.Select(p => p.ProjectName).ToArray();
+                
+                _selectedProjectIndex = Mathf.Clamp(_selectedProjectIndex, 0, _projects.Count - 1);
+                
+                GUI.backgroundColor = ProjectNameBackgroundColor;
+                
+                _selectedProjectIndex = EditorGUILayout.Popup(_selectedProjectIndex, names);
+                
+                GUI.backgroundColor = DefaultEditProjectColor;
+            }
     
             GUILayout.FlexibleSpace();
             
@@ -123,34 +223,32 @@ namespace TaskManagement.Editor.Controllers
     
             EditorGUILayout.EndHorizontal();
         }
+        
+        /// <summary>
+        /// Draws the project editor UI for the currently selected project.
+        /// Allows the user to rename or delete the project.
+        /// </summary>
         public void DrawProjectEditor()
         {
-            if (_selectedProjectIndex < 0 || _selectedProjectIndex >= _projects.Count)
+            if (!ProjectData)
                 return;
 
             ProjectData project = ProjectData;
-    
-            if (!project)
-                return;
-    
+
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-    
+            
             EditorGUILayout.BeginHorizontal();
             
-            GUILayout.Label($"{ProjectIcon}", GUILayout.Width(32));
-            
-            EditorGUILayout.LabelField(EditProjectLabel, EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"{ProjectIcon} {EditProjectLabel}", EditorStyles.boldLabel);
             
             EditorGUILayout.EndHorizontal();
-    
+            
             EditorGUILayout.BeginHorizontal();
-            
-            EditorGUILayout.LabelField(EditProjectNameLabel, GUILayout.Width(96));
-            
-            string newName = EditorGUILayout.TextField(project.ProjectName);
+    
+            string newName = EditorGUILayout.TextField($"{EditProjectNameLabel}", project.ProjectName);
             
             EditorGUILayout.EndHorizontal();
-    
+            
             if (newName != project.ProjectName)
             {
                 project.ProjectName = newName;
@@ -159,88 +257,28 @@ namespace TaskManagement.Editor.Controllers
                 
                 AssetDatabase.SaveAssets();
             }
-    
+            
             EditorGUILayout.BeginHorizontal();
             
             GUILayout.FlexibleSpace();
     
             GUI.backgroundColor = DeleteProjectColor;
             
-            if (GUILayout.Button($"{DeleteProjectIcon}{DeleteProjectButtonText}", GUILayout.Width(128)))
+            if (GUILayout.Button($"{DeleteProjectIcon}{DeleteProjectButtonText}", GUILayout.Width(150)))
             {
                 bool confirm = EditorUtility.DisplayDialog(DeleteProjectButtonText,
                     $"{DeleteProjectDialogPrefix}{project.ProjectName}{DeleteProjectDialogSuffix}",
                     DeleteProjectDialogOk, DeleteProjectDialogCancel);
-
+        
                 if (confirm)
                     DeleteProject(project);
             }
-            
-            GUI.backgroundColor = DefaultEditProjectColor;
     
+            GUI.backgroundColor = DefaultEditProjectColor;
+
             EditorGUILayout.EndHorizontal();
             
             EditorGUILayout.EndVertical();
-        }
-        private void DeleteProject(ProjectData project)
-        {
-            if (!project)
-                return;
-
-            string projectPath = AssetDatabase.GetAssetPath(project);
-            string projectFolderPath = TaskManagementProjectsPath + project.ProjectName;
-            
-            foreach (string taskPath in project.Tasks.ToList().Select(AssetDatabase.GetAssetPath)
-                         .Where(taskPath => !string.IsNullOrEmpty(taskPath))) 
-                AssetDatabase.DeleteAsset(taskPath);
-
-            if (!string.IsNullOrEmpty(projectPath))
-                AssetDatabase.DeleteAsset(projectPath);
-            
-            if (System.IO.Directory.Exists(projectFolderPath))
-                AssetDatabase.DeleteAsset(projectFolderPath);
-
-            _projects.Remove(project);
-
-            _selectedProjectIndex = Mathf.Clamp(_selectedProjectIndex - 1, 0, _projects.Count - 1);
-
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-        }
-        private void CreateNewProject(string projectName)
-        {
-            if (string.IsNullOrWhiteSpace(projectName))
-            {
-                EditorUtility.DisplayDialog(CreateProjectInvalidProjectNameDialogTittle,
-                    CreateProjectInvalidProjectNameDialogMessage, CreateProjectInvalidProjectNameDialogOk);
-                
-                return;
-            }
-            
-            if (_projects.Any(p => p.ProjectName.Equals(projectName, System.StringComparison.OrdinalIgnoreCase)))
-            {
-                EditorUtility.DisplayDialog(DuplicateProjectInvalidProjectNameDialogTittle,
-                    $"{DuplicateProjectInvalidProjectNameDialogMessagePrefix}{projectName}{DuplicateProjectInvalidProjectNameDialogMessageSuffix}",
-                    DuplicateProjectInvalidProjectNameDialogOk);
-                
-                return;
-            }
-            
-            string path = $"{TaskManagementProjectsPath}{projectName}";
-            
-            ProjectData project = EditorAssetUtility.CreateOrLoadAsset<ProjectData>(path, projectName);
-
-            project.ProjectName = projectName;
-            
-            project.Tasks = new List<TaskData>();
-
-            _projects.Add(project);
-            
-            _selectedProjectIndex = _projects.Count - 1;
-
-            EditorUtility.SetDirty(project);
-            
-            AssetDatabase.SaveAssets();
         }
         #endregion
     }
