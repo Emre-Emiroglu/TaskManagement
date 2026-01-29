@@ -1,4 +1,4 @@
-﻿## [1.0.0] - 2025-11-06
+﻿## [1.0.0] - 2026-01-29
 
 ### Added
 - Introduced the Task Management Editor Window for creating and managing tasks directly inside Unity Editor.

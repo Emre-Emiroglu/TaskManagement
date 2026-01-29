@@ -1,5 +1,3 @@
-<img src="icon.jpg" width="512" height="512" alt="TaskManagement Logo">
-
 # TaskManagement
 TaskManagement is a ScriptableObject-based task management tool designed to run entirely inside the Unity Editor. TaskManagement helps developers plan projects, organize tasks, and track progress directly within Unity. 100% editor-side, with no runtime dependencies. The package stores projects and tasks as ScriptableObject assets under Assets/TaskManagement/Projects/.
 
